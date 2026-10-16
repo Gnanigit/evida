@@ -73,11 +73,15 @@ def retrieval_node(
         str(DEFAULT_DB_PATH),
     )
 
+    query = state.get("rewritten_query") or state["question"]
+
+    attempts = state.get("retrieval_attempts", 0) + 1
+
     vector_store = open_vector_store(persist_directory)
 
     documents = search_documents(
         vector_store=vector_store,
-        question=state["question"],
+        question=query,
         k=3,
     )
 
@@ -92,8 +96,73 @@ def retrieval_node(
             }
             for document in documents
         ],
+        "retrieval_attempts": attempts,
     }
 
+
+def grade_evidence_node(state: EvidaState) -> dict:
+    # Evaluate whether retrieved document chunks are relevant.
+    context = "\n\n".join(state.get("context",[]))
+
+    if not context.strip():
+        return {"evidence_grade": "irrelevant"}
+
+    prompt = f"""
+    You are evaluating evidence for Evida, An AI research assistant.
+
+    Determine whether the provided document evidence is relevant to answer the user's question.
+
+    Return exactly one word:
+    relevant
+    irrelevant
+
+    Question: {state["question"]}
+
+    Document Evidence: {context}
+    """
+    response = llm.invoke(prompt)
+    grade = response.content.strip().lower()
+
+    if grade not in ("relevant", "irrelevant"):
+        grade = "irrelevant"
+
+    return {"evidence_grade": grade}
+
+
+def rewrite_query_node(state: EvidaState) -> dict:
+    # Rewrite the question to improve document retrieval.
+    prompt = f"""
+    You are improving a search query for Evida, an AI research assistant.
+
+    The original question did not retrieve relevant document evidence.
+
+    Rewrite the question as a concise, standalone search query that is
+    more likely to retrieve useful passages from the document collection.
+
+    Rules:
+    - Preserve the user's original intent.
+    - Keep important names, topics, and technical terms.
+    - Use alternative keywords where helpful.
+    - Do not answer the question.
+    - Return only the rewritten search query.
+
+    Original question:
+    {state["question"]}
+
+    Previous search query:
+    {state.get("rewritten_query") or state["question"]}
+
+    Rewritten search query:
+    """
+
+    response = llm.invoke(prompt)
+    rewritten_query = response.content.strip()
+
+    # Fall back to the original question if the model returns no query.
+    if not rewritten_query:
+        rewritten_query = state["question"]
+
+    return {"rewritten_query": rewritten_query}
 
 
 def retrieval_answer_node(state: EvidaState) -> dict:
@@ -127,3 +196,11 @@ def retrieval_answer_node(state: EvidaState) -> dict:
     response = llm.invoke(prompt)
 
     return {"answer" : response.content}
+
+def insufficient_evidence_node(state: EvidaState) -> dict:
+    return {
+        "answer": (
+            "I couldn't find sufficiently relevant information "
+            "in the available documents to answer this question."
+        )
+    }
