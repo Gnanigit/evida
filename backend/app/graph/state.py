@@ -20,5 +20,13 @@ class EvidaState(TypedDict):
     rewritten_query: NotRequired[str]
     retrieval_attempts: NotRequired[int]
 
+    # Compound-question support
+    sub_questions: NotRequired[list[str]]
+    sub_answers: NotRequired[list[dict]]
+
     # Final response
     answer: str
+
+    # Claim verification
+    verification_results: NotRequired[list[dict]]
+    verified_answer: NotRequired[str]

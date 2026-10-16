@@ -8,6 +8,11 @@ from app.graph.nodes import (
     grade_evidence_node,
     rewrite_query_node,
     retrieval_answer_node,
+    web_search_node,
+    web_evidence_grade_node,
+    web_answer_node,
+    verify_claims_node,
+    finalize_verified_answer_node,
     insufficient_evidence_node,
 )
 
@@ -25,7 +30,13 @@ def route_evidence(state: EvidaState) -> str:
     if state.get("retrieval_attempts",0) < MAX_RETRIEVAL_ATTEMPTS:
         return "retry"
     
-    return "exhausted"
+    return "web_search"
+
+def route_web_evidence(state: EvidaState) -> str:
+    if state.get("evidence_grade") == "relevant":
+        return "relevant"
+
+    return "irrelevant"
 
 
 builder = StateGraph(EvidaState)
@@ -37,6 +48,15 @@ builder.add_node("retrieval", retrieval_node)
 builder.add_node("grade_evidence", grade_evidence_node)
 builder.add_node("rewrite_query", rewrite_query_node)
 builder.add_node("retrieval_answer", retrieval_answer_node)
+builder.add_node("web_search", web_search_node)
+builder.add_node("web_evidence_grade", web_evidence_grade_node)
+builder.add_node("web_answer", web_answer_node)
+builder.add_node("verify_claims", verify_claims_node)
+builder.add_node(
+    "finalize_verified_answer",
+    finalize_verified_answer_node,
+)
+
 builder.add_node("insufficient_evidence", insufficient_evidence_node)
 
 # Edges
@@ -46,10 +66,10 @@ builder.add_conditional_edges(
     "router",
     route_question,
     {
-        "general" : "general_answer",
-        "retrieval" : "retrieval"
-    }
-
+        "general": "general_answer",
+        "retrieval": "retrieval",
+        "web": "web_search",
+    },
 )
 
 builder.add_edge("retrieval", "grade_evidence")
@@ -60,15 +80,32 @@ builder.add_conditional_edges(
     {
         "relevant" : "retrieval_answer",
         "retry" : "rewrite_query",
-        "exhausted": "insufficient_evidence",
+        "web_search": "web_search",
     }
 )
 
 builder.add_edge("rewrite_query","retrieval")
 
+builder.add_edge("web_search","web_evidence_grade")
+
+builder.add_conditional_edges(
+    "web_evidence_grade",
+    route_web_evidence,
+    {
+        "relevant" : "web_answer",
+        "irrelevant" : "insufficient_evidence"
+    }
+)
+
+builder.add_edge("web_answer", "verify_claims")
+
+builder.add_edge("verify_claims", "finalize_verified_answer")
+
 builder.add_edge("general_answer", END)
 
 builder.add_edge("retrieval_answer", END)
+
+builder.add_edge("finalize_verified_answer", END)
 
 builder.add_edge("insufficient_evidence", END)
 

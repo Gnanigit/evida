@@ -20,15 +20,22 @@ def create_vector_store(
     documents: list[Document],
     persist_directory: str | Path = DEFAULT_DB_PATH,
 ) -> Chroma:
+    embeddings = get_embeddings()
 
-    vector_store = Chroma.from_documents(
-        documents=documents,
-        embedding=get_embeddings(),
+    vector_store = Chroma(
         collection_name=settings.collection_name,
+        embedding_function=embeddings,
         persist_directory=str(persist_directory),
     )
 
-    return vector_store
+    vector_store.delete_collection()
+
+    return Chroma.from_documents(
+        documents=documents,
+        embedding=embeddings,
+        collection_name=settings.collection_name,
+        persist_directory=str(persist_directory),
+    )
 
 # Open an existing Chroma store without re-indexing documents.
 def open_vector_store(
