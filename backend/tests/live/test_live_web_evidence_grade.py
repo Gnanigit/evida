@@ -1,8 +1,7 @@
 
 import pytest
 
-from app.graph.nodes import web_evidence_grade_node
-
+from app.graph.nodes.evidence_grading import web_evidence_grade_node
 
 @pytest.mark.parametrize(
     ("question", "context", "expected_grade"),

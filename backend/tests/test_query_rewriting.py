@@ -1,8 +1,8 @@
 
 from unittest.mock import Mock
 
-import app.graph.nodes as nodes
-from app.graph.nodes import rewrite_query_node
+import app.graph.nodes.query_rewriting as nodes
+from app.graph.nodes.query_rewriting import rewrite_query_node
 
 
 def test_rewrite_query_returns_rewritten_query(monkeypatch):

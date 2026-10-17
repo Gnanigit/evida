@@ -5,7 +5,6 @@ from pathlib import Path
 from app.core.config import settings
 
 
-
 # Resolve the storage path relative to the backend folder.
 DEFAULT_DB_PATH = Path(__file__).resolve().parents[2] / "chroma_db"
 

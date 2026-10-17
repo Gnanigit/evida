@@ -1,13 +1,13 @@
 from langgraph.graph import START, END, StateGraph
 
 from app.graph.state import EvidaState
-from app.graph.nodes import (
-    web_search_node,
-    web_evidence_grade_node,
+
+from app.graph.nodes.web_search import web_search_node
+from app.graph.nodes.evidence_grading import web_evidence_grade_node
+from app.graph.nodes.claim_verification import verify_claims_node
+from app.graph.nodes.answer_generation import (
     web_answer_node,
-    verify_claims_node,
-    finalize_verified_answer_node,
-)
+    finalize_verified_answer_node)
 
 
 def route_web_evidence(state: EvidaState) -> str:

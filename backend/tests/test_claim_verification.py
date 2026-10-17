@@ -1,9 +1,8 @@
 import json
 from unittest.mock import Mock
 
-import app.graph.nodes as nodes
-from app.graph.nodes import verify_claims_node
-
+from app.graph.nodes.claim_verification import verify_claims_node
+import app.graph.nodes.claim_verification as nodes
 
 def make_state(answer, context):
     return {

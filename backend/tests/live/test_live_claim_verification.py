@@ -1,7 +1,5 @@
-from app.graph.nodes import (
-    verify_claims_node,
-    finalize_verified_answer_node,
-)
+from app.graph.nodes.answer_generation import finalize_verified_answer_node
+from app.graph.nodes.claim_verification import verify_claims_node
 
 
 def test_live_claim_verification():

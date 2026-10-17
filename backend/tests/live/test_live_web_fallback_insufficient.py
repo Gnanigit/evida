@@ -1,13 +1,11 @@
-
 from langgraph.graph import START, END, StateGraph
 
 from app.graph.state import EvidaState
-from app.graph.nodes import (
-    web_search_node,
-    web_evidence_grade_node,
-    web_answer_node,
-    insufficient_evidence_node,
-)
+
+from app.graph.nodes.web_search import web_search_node
+from app.graph.nodes.evidence_grading import web_evidence_grade_node
+from app.graph.nodes.answer_generation import web_answer_node
+from app.graph.nodes.insufficient_evidence import insufficient_evidence_node
 
 
 def build_live_web_evidence_graph():

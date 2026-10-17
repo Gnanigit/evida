@@ -1,4 +1,4 @@
-from app.graph.nodes import validate_web_citations
+from app.graph.nodes.answer_generation import validate_web_citations
 
 def test_validate_web_citations_keeps_retrieved_url():
     answer = (

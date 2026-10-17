@@ -2,15 +2,14 @@
 from langgraph.graph import START, END, StateGraph
 
 from app.graph.state import EvidaState
-from app.graph.nodes import (
-    retrieval_node,
-    grade_evidence_node,
-    rewrite_query_node,
-    web_search_node,
-    web_evidence_grade_node,
-    web_answer_node,
-    insufficient_evidence_node,
-)
+
+from app.graph.nodes.web_search import web_search_node
+from app.graph.nodes.evidence_grading import web_evidence_grade_node
+from app.graph.nodes.answer_generation import web_answer_node
+from app.graph.nodes.insufficient_evidence import insufficient_evidence_node
+from app.graph.nodes.query_rewriting import rewrite_query_node
+from app.graph.nodes.retrieval import retrieval_node
+from app.graph.nodes.evidence_grading import grade_evidence_node
 
 MAX_RETRIEVAL_ATTEMPTS = 2
 

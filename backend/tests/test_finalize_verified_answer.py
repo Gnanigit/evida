@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
-import app.graph.nodes as nodes
-from app.graph.nodes import finalize_verified_answer_node
+import app.graph.nodes.answer_generation as nodes
+from app.graph.nodes.answer_generation import finalize_verified_answer_node
 
 
 def make_state(verification_results, answer="Original generated answer."):

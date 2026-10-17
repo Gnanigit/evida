@@ -1,7 +1,7 @@
 
 from reportlab.pdfgen import canvas
 
-from app.graph.nodes import retrieval_node
+from app.graph.nodes.retrieval import retrieval_node
 from app.ingestion.pdf_loader import load_and_split_pdf
 from app.ingestion.vector_store import create_vector_store
 

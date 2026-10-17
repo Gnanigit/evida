@@ -2,7 +2,7 @@
 import json
 from unittest.mock import Mock
 
-from app.graph import nodes
+import app.graph.nodes.claim_verification as nodes
 
 
 def test_final_answer_with_unsupported_claim_fails_closed(monkeypatch):

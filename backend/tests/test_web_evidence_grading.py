@@ -1,8 +1,8 @@
 
 from unittest.mock import Mock
 
-import app.graph.nodes as nodes
-from app.graph.nodes import web_evidence_grade_node
+import app.graph.nodes.evidence_grading as nodes
+from app.graph.nodes.evidence_grading import web_evidence_grade_node
 
 
 def make_state(context):

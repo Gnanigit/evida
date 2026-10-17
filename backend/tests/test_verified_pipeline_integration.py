@@ -2,7 +2,8 @@
 import json
 from unittest.mock import Mock
 
-from app.graph import nodes
+import app.graph.nodes.claim_verification as verification_nodes
+import app.graph.nodes.answer_generation as answer_nodes
 
 
 def test_verified_pipeline_excludes_unsupported_claims(monkeypatch):
@@ -38,7 +39,8 @@ def test_verified_pipeline_excludes_unsupported_claims(monkeypatch):
     fake_llm.invoke.return_value = Mock(
         content=json.dumps(verification_response)
     )
-    monkeypatch.setattr(nodes, "llm", fake_llm)
+    monkeypatch.setattr(verification_nodes, "llm", fake_llm)
+    monkeypatch.setattr(answer_nodes, "llm", fake_llm)
 
     state = {
         "question": "How did customer growth and profits change?",
@@ -50,7 +52,7 @@ def test_verified_pipeline_excludes_unsupported_claims(monkeypatch):
     }
 
     # Act: run the actual claim-verification node.
-    verification_update = nodes.verify_claims_node(state)
+    verification_update = verification_nodes.verify_claims_node(state)
     state.update(verification_update)
 
     # Confirm the verifier distinguishes supported from unsupported.
@@ -60,7 +62,7 @@ def test_verified_pipeline_excludes_unsupported_claims(monkeypatch):
 
     
     # The finalizer must receive only supported claims.
-    nodes.finalize_verified_answer_node(state)
+    answer_nodes.finalize_verified_answer_node(state)
 
     finalizer_prompt = fake_llm.invoke.call_args.args[0]
 
