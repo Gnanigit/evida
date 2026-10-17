@@ -91,8 +91,6 @@ def validate_web_citations(answer: str, sources: list[dict]) -> str:
 
 
 
-
-
 # Generate an answer grounded in graded web evidence.
 def web_answer_node(state: EvidaState) -> dict:
     context = "\n\n".join(state.get("context", []))

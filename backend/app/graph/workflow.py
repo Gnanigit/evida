@@ -1,7 +1,12 @@
 from langgraph.graph import START, END, StateGraph
 from app.graph.state import EvidaState
 from app.graph.nodes.router import router_node
-from app.graph.nodes.decomposition import decompose_question_node
+from app.graph.nodes.decomposition import (
+    decompose_question_node,
+    prepare_subquestion_node,
+    collect_subanswer_node,
+    aggregate_subanswers_node,
+)
 from app.graph.nodes.retrieval import retrieval_node
 from app.graph.nodes.evidence_grading import (
     grade_evidence_node,
@@ -17,6 +22,7 @@ from app.graph.nodes.answer_generation import (
 )
 from app.graph.nodes.claim_verification import verify_claims_node
 from app.graph.nodes.insufficient_evidence import insufficient_evidence_node
+from app.graph.nodes.technical_error import technical_error_node
 
 MAX_RETRIEVAL_ATTEMPTS = 2
 
@@ -40,10 +46,30 @@ def route_web_evidence(state: EvidaState) -> str:
 
     return "irrelevant"
 
+def route_after_web_search(state: EvidaState) -> str:
+    if state.get("technical_error"):
+        return "technical_error"
+
+    return "success"
+
+def route_next_subquestion(state: EvidaState) -> str:
+    index = state.get("current_sub_question_index", 0)
+    total = len(state.get("sub_questions") or [])
+
+    if index < total:
+        return "next"
+
+    return "finish"
 
 builder = StateGraph(EvidaState)
 
 # Nodes
+# Orchestration nodes
+builder.add_node("decompose_question", decompose_question_node)
+builder.add_node("prepare_subquestion", prepare_subquestion_node)
+builder.add_node("collect_subanswer", collect_subanswer_node)
+builder.add_node("aggregate_subanswers", aggregate_subanswers_node)
+
 builder.add_node("router", router_node)
 builder.add_node("general_answer", general_answer_node)
 builder.add_node("retrieval", retrieval_node)
@@ -60,10 +86,15 @@ builder.add_node(
 )
 
 builder.add_node("insufficient_evidence", insufficient_evidence_node)
+builder.add_node("technical_error", technical_error_node)
 
 # Edges
-builder.add_edge(START, "router")
+# Start by decomposing the original request.
+builder.add_edge(START, "decompose_question")
+builder.add_edge("decompose_question", "prepare_subquestion")
+builder.add_edge("prepare_subquestion", "router")
 
+# Route each subquestion through the existing pipeline.
 builder.add_conditional_edges(
     "router",
     route_question,
@@ -73,6 +104,7 @@ builder.add_conditional_edges(
         "web": "web_search",
     },
 )
+
 
 builder.add_edge("retrieval", "grade_evidence")
 
@@ -88,7 +120,16 @@ builder.add_conditional_edges(
 
 builder.add_edge("rewrite_query","retrieval")
 
-builder.add_edge("web_search","web_evidence_grade")
+builder.add_conditional_edges(
+    "web_search",
+    route_after_web_search,
+    {
+        "technical_error": "technical_error",
+        "success": "web_evidence_grade",
+    },
+)
+
+builder.add_edge("technical_error", "collect_subanswer")
 
 builder.add_conditional_edges(
     "web_evidence_grade",
@@ -99,17 +140,36 @@ builder.add_conditional_edges(
     }
 )
 
+
+# Finish the selected answer path, then collect its result.
+builder.add_edge("general_answer", "collect_subanswer")
+builder.add_edge("retrieval_answer", "collect_subanswer")
+builder.add_edge("finalize_verified_answer", "collect_subanswer")
+builder.add_edge("insufficient_evidence", "collect_subanswer")
+
 builder.add_edge("web_answer", "verify_claims")
 
 builder.add_edge("verify_claims", "finalize_verified_answer")
 
-builder.add_edge("general_answer", END)
+# Continue with the next subquestion or finish the workflow.
+builder.add_conditional_edges(
+    "collect_subanswer",
+    route_next_subquestion,
+    {
+        "next": "prepare_subquestion",
+        "finish": "aggregate_subanswers",
+    },
+)
 
-builder.add_edge("retrieval_answer", END)
+builder.add_edge("aggregate_subanswers", END)
 
-builder.add_edge("finalize_verified_answer", END)
+# builder.add_edge("general_answer", END)
 
-builder.add_edge("insufficient_evidence", END)
+# builder.add_edge("retrieval_answer", END)
+
+# builder.add_edge("finalize_verified_answer", END)
+
+# builder.add_edge("insufficient_evidence", END)
 
 
 graph = builder.compile()

@@ -17,10 +17,12 @@ def web_search_node(state: EvidaState) -> dict:
 
         results = tavily.invoke({"query": search_query})
 
-    except Exception as exc:
-        raise RuntimeError(
-            f"Web search failed due to a technical error: {exc}"
-        ) from exc
+    except Exception:
+        return {
+            "technical_error": "Web search failed due to a technical issue.",
+            "context": [],
+            "sources": [],
+        }
 
     # Normalize the returned results into a consistent structure.
     if isinstance(results, dict):
