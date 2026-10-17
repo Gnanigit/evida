@@ -57,3 +57,34 @@ def create_conversation(
         )
 
     return response.data[0]
+
+
+# Delete a conversation belonging to the authenticated user.
+@router.delete("/{conversation_id}")
+def delete_conversation(
+    conversation_id: str,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    current_user: dict = Depends(get_current_user),
+):
+    """"""
+
+    user_supabase = get_user_supabase_client(credentials.credentials)
+
+    response = (
+        user_supabase.table("conversations")
+        .delete()
+        .eq("id", conversation_id)
+        .eq("user_id", current_user["id"])
+        .execute()
+    )
+
+    if not response.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found.",
+        )
+
+    return {
+        "message": "Conversation deleted successfully.",
+        "id": conversation_id,
+    }

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useMatch, useNavigate } from 'react-router'
 import { useAuth } from '../../auth/AuthContext'
 import { ApiError, errorMessage } from '../../services/api'
 import { getCurrentUser } from '../../services/auth'
-import { listConversations } from '../../services/conversations'
+import { deleteConversation, listConversations } from '../../services/conversations'
 import type { Conversation, CurrentUser } from '../../types/api'
 import type { AppContext } from './appContext'
 import Sidebar from './Sidebar'
@@ -18,6 +18,8 @@ export type ConversationsState = {
 // On small screens the sidebar becomes a drawer opened from the top bar.
 export default function AppLayout() {
   const { session } = useAuth()
+  const navigate = useNavigate()
+  const openConversationId = useMatch('/c/:conversationId')?.params.conversationId
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [backendError, setBackendError] = useState<string | null>(null)
@@ -57,6 +59,15 @@ export default function AppLayout() {
     void refreshConversations()
   }, [verifyBackendSession, refreshConversations])
 
+  // Errors propagate so the sidebar can show them on the conversation's row.
+  async function handleDeleteConversation(conversationId: string) {
+    await deleteConversation(conversationId)
+    if (conversationId === openConversationId) {
+      navigate('/', { replace: true })
+    }
+    await refreshConversations()
+  }
+
   function retryBackend() {
     void verifyBackendSession()
     void refreshConversations()
@@ -73,6 +84,7 @@ export default function AppLayout() {
         email={currentUser?.email ?? session?.user.email ?? null}
         conversations={conversations}
         onRetryConversations={() => void refreshConversations()}
+        onDeleteConversation={handleDeleteConversation}
         onNavigate={() => setSidebarOpen(false)}
       />
       <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />

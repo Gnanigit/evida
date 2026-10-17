@@ -332,6 +332,65 @@ a.button {
   font-weight: 600;
 }
 
+.conversation-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.conversation-row .nav-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-delete {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.conversation-row:hover .conversation-delete,
+.conversation-row:focus-within .conversation-delete,
+.conversation-row:has(.active) .conversation-delete {
+  opacity: 1;
+}
+
+.conversation-delete:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+@media (hover: none) {
+  .conversation-delete {
+    opacity: 1;
+  }
+}
+
+.conversation-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem 0.5rem;
+}
+
+.conversation-confirm-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.conversation-error {
+  margin: 0;
+  padding: 0 0.6rem 0.4rem;
+}
+
 .sidebar-conversations {
   flex: 1;
   min-height: 0;
