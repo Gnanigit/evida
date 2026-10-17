@@ -1,26 +1,38 @@
 from langchain_core.runnables import RunnableConfig
-from app.graph.state import EvidaState
 
+from app.graph.state import EvidaState
 from app.ingestion.vector_store import (
     DEFAULT_DB_PATH,
     open_vector_store,
-    search_documents
+    search_documents,
 )
 
-# config is for testing the retrieval node and rag flow, In real usage it directly uses the 'DEFAULT_DB_PATH'
+
+# Retrieve relevant chunks from the authenticated user's documents.
 def retrieval_node(
     state: EvidaState,
     config: RunnableConfig | None = None,
 ) -> dict:
-    """Retrieve relevant document chunks from Chroma."""
 
     configurable = (config or {}).get("configurable", {})
+
+    # Resolve settings for this retrieval operation.
     persist_directory = configurable.get(
         "persist_directory",
         str(DEFAULT_DB_PATH),
     )
+    user_id = configurable.get("user_id")
 
-    query = state.get("rewritten_query") or state["question"]
+    if not user_id:
+        raise ValueError(
+            "A user_id must be provided to retrieve private documents."
+        )
+
+    query = (
+        state.get("rewritten_query")
+        or state.get("current_question")
+        or state["question"]
+    )
 
     attempts = state.get("retrieval_attempts", 0) + 1
 
@@ -29,6 +41,7 @@ def retrieval_node(
     documents = search_documents(
         vector_store=vector_store,
         question=query,
+        user_id=user_id,
         k=3,
     )
 
@@ -40,6 +53,7 @@ def retrieval_node(
             {
                 "source": document.metadata.get("source", "unknown"),
                 "page": document.metadata.get("page"),
+                "document_id": document.metadata.get("document_id"),
             }
             for document in documents
         ],

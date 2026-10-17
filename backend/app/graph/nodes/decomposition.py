@@ -136,8 +136,10 @@ def collect_subanswer_node(state: EvidaState) -> dict:
 
 
 def aggregate_subanswers_node(state: EvidaState) -> dict:
-    """Combine collected answers without rewriting their content."""
+    """Combine answers and collect unique sources from all subquestions."""
     sections = []
+    combined_sources = []
+    seen_sources = set()
 
     for index, item in enumerate(state.get("sub_answers", []), start=1):
         section = [
@@ -145,11 +147,20 @@ def aggregate_subanswers_node(state: EvidaState) -> dict:
             item.get("answer", ""),
         ]
 
-        sources = item.get("sources", [])
-        if sources:
-            source_lines = []
+        source_lines = []
 
-            for source in sources:
+        for source in item.get("sources", []):
+            source_key = (
+                source.get("url"),
+                source.get("document_id"),
+                source.get("source"),
+                source.get("page"),
+            )
+
+            if source_key not in seen_sources:
+                seen_sources.add(source_key)
+                combined_sources.append(source)
+
                 url = source.get("url")
                 title = (
                     source.get("title")
@@ -167,10 +178,12 @@ def aggregate_subanswers_node(state: EvidaState) -> dict:
                         label += f" (page {page})"
                     source_lines.append(f"- {label}")
 
+        if source_lines:
             section.extend(["", "**Sources**", *source_lines])
 
         sections.append("\n".join(section))
 
     return {
         "answer": "\n\n".join(sections),
+        "sources": combined_sources,
     }

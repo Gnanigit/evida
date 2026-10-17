@@ -19,3 +19,5 @@ langchain-chroma
 langchain-huggingface
 sentence-transformers
 langchain-tavily
+supabase
+python-multipart

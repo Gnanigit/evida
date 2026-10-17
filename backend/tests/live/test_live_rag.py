@@ -5,14 +5,21 @@ from app.graph.workflow import graph
 def test_live_document_retrieval():
     question = "How much did registered customers grow in 2025?"
 
-    result = graph.invoke({
-        "question": question,
-        "route": "retrieval",
-        "context": [],
-        "sources": [],
-        "evidence_grade": None,
-        "answer": "",
-    })
+    result = graph.invoke(
+        {
+            "question": question,
+            "route": "retrieval",
+            "context": [],
+            "sources": [],
+            "evidence_grade": None,
+            "answer": "",
+        },
+        config={
+            "configurable": {
+                "user_id": "test-user",
+            }
+        },
+    )
 
     print("\nAnswer:", result["answer"])
     print("Sources:", result.get("sources", []))

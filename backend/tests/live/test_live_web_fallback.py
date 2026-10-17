@@ -81,14 +81,21 @@ def test_live_web_fallback():
         "in the 2026 Nobel Prize awards?"
     )
 
-    result = graph.invoke({
-        "question": question,
-        "route": "retrieval",
-        "context": [],
-        "sources": [],
-        "evidence_grade": None,
-        "answer": "",
-    })
+    result = graph.invoke(
+        {
+            "question": question,
+            "route": "retrieval",
+            "context": [],
+            "sources": [],
+            "evidence_grade": None,
+            "answer": "",
+        },
+            config={
+                "configurable": {
+                    "user_id": "test-user",
+                }
+            },
+    )
 
     print("\nQuestion:", question)
     print("\nAnswer:", result["answer"])

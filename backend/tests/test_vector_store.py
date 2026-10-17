@@ -32,14 +32,17 @@ def test_store_and_search_documents(tmp_path):
     db_path = tmp_path / "chroma_db"
 
     vector_store = create_vector_store(
-        documents = chunks,
-        persist_directory = str(db_path)
+        documents=chunks,
+        user_id="test-user",
+        document_id="test-document",
+        persist_directory=str(db_path),
     )
 
     # 4. Search for information about Evida.
     results = search_documents(
         vector_store=vector_store,
         question="What does Evida do?",
+        user_id="test-user",
         k=2,
     )
 

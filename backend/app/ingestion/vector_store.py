@@ -15,31 +15,11 @@ def get_embeddings() -> HuggingFaceEmbeddings:
         model_name = settings.embedding_model
     )
 
-def create_vector_store(
-    documents: list[Document],
+
+def open_vector_store(
     persist_directory: str | Path = DEFAULT_DB_PATH,
 ) -> Chroma:
-    embeddings = get_embeddings()
-
-    vector_store = Chroma(
-        collection_name=settings.collection_name,
-        embedding_function=embeddings,
-        persist_directory=str(persist_directory),
-    )
-
-    vector_store.delete_collection()
-
-    return Chroma.from_documents(
-        documents=documents,
-        embedding=embeddings,
-        collection_name=settings.collection_name,
-        persist_directory=str(persist_directory),
-    )
-
-# Open an existing Chroma store without re-indexing documents.
-def open_vector_store(
-    persist_directory : str | Path = DEFAULT_DB_PATH
-) -> Chroma:
+    """Open an existing Chroma store or create its collection."""
     return Chroma(
         collection_name=settings.collection_name,
         embedding_function=get_embeddings(),
@@ -47,9 +27,75 @@ def open_vector_store(
     )
 
 
+def add_documents_to_vector_store(
+    documents: list[Document],
+    user_id: str,
+    document_id: str,
+    persist_directory: str | Path = DEFAULT_DB_PATH,
+) -> Chroma:
+    # Replace a document's chunks without affecting other documents.
+    vector_store = open_vector_store(persist_directory)
+
+    if not documents:
+        return vector_store
+
+    # Add ownership information to every chunk.
+    prepared_documents = [
+        Document(
+            page_content=document.page_content,
+            metadata={
+                **document.metadata,
+                "user_id": user_id,
+                "document_id": document_id,
+            },
+        )
+        for document in documents
+    ]
+
+    # Delete only chunks belonging to this user and document.
+    vector_store.delete(
+        where={
+            "$and": [
+                {"user_id": user_id},
+                {"document_id": document_id},
+            ]
+        }
+    )
+
+    # Use predictable IDs so each chunk has a stable identity.
+    chunk_ids = [
+        f"{document_id}:{index}"
+        for index in range(len(prepared_documents))
+    ]
+
+    vector_store.add_documents(
+        documents=prepared_documents,
+        ids=chunk_ids,
+    )
+
+    return vector_store
+
+
+
+def create_vector_store(
+    documents: list[Document],
+    user_id: str,
+    document_id: str,
+    persist_directory: str | Path = DEFAULT_DB_PATH,
+) -> Chroma:
+    """Create or update the store for a specific document."""
+
+    return add_documents_to_vector_store(
+        documents=documents,
+        user_id=user_id,
+        document_id=document_id,
+        persist_directory=persist_directory,
+    )
+
 def search_documents(
     vector_store: Chroma,
     question: str,
+    user_id: str,
     k: int = 3,
 ) -> list[Document]:
     # Return the most relevant document chunks for a question.
@@ -57,4 +103,5 @@ def search_documents(
     return vector_store.similarity_search(
         query=question,
         k=k,
+        filter={"user_id": user_id},
     )

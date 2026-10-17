@@ -9,7 +9,14 @@ question = (
 )
 
 print("\nRunning mixed document + web compound-question test...")
-result = graph.invoke({"question": question})
+result = graph.invoke(
+    {"question": question},
+    config={
+        "configurable": {
+            "user_id": "test-user",
+        }
+    },
+)
 
 print("\n=== ORIGINAL QUESTION ===")
 print(question)

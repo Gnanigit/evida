@@ -26,6 +26,8 @@ def test_retrieval_node_returns_context_and_sources(tmp_path):
     create_vector_store(
         documents=chunks,
         persist_directory=db_path,
+        user_id="test-user",
+        document_id="test-document",
     )
 
     # Execute the retrieval node against that database.
@@ -34,6 +36,7 @@ def test_retrieval_node_returns_context_and_sources(tmp_path):
         config={
             "configurable": {
                 "persist_directory": str(db_path),
+                "user_id": "test-user",
             }
         },
     )

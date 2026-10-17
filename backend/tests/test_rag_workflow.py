@@ -31,6 +31,8 @@ def test_document_question_uses_retrieved_evidence(tmp_path):
     create_vector_store(
         documents=chunks,
         persist_directory=db_path,
+        user_id="test-user",
+        document_id="test-document",
     )
 
     # Run the workflow against the same database.
@@ -41,6 +43,7 @@ def test_document_question_uses_retrieved_evidence(tmp_path):
         config={
             "configurable": {
                 "persist_directory": str(db_path),
+                "user_id": "test-user",
             }
         },
     )

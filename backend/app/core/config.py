@@ -5,6 +5,8 @@ class Settings(BaseSettings):
     embedding_model : str = "sentence-transformers/all-MiniLM-L6-v2"
     collection_name : str = "evida_documents"
     tavily_api_key: str
+    supabase_url: str
+    supabase_publishable_key: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
