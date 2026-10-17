@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
@@ -23,7 +24,7 @@ def chat(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     current_user: dict = Depends(get_current_user),
 ):
-    """Run Evida and save both messages to the user's conversation."""
+    # Run Evida and save both messages to the user's conversation.
 
     if credentials is None:
         raise HTTPException(
@@ -59,7 +60,7 @@ def chat(
                 "role": "user",
                 "content": request.question,
             })
-            .select("id, conversation_id, role, content, created_at")
+            .select("id, conversation_id, role, content, sources, created_at")
             .execute()
         )
 
@@ -68,6 +69,8 @@ def chat(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Could not save the user message.",
             )
+
+        user_message_id = user_message_response.data[0]["id"]
 
         # 3. Run the existing LangGraph workflow.
         result = graph.invoke(
@@ -92,8 +95,9 @@ def chat(
                 "user_id": user_id,
                 "role": "assistant",
                 "content": answer,
+                "sources": result.get("sources", []),
             })
-            .select("id, conversation_id, role, content, created_at")
+            .select("id, conversation_id, role, content, sources, created_at")
             .execute()
         )
 
@@ -104,11 +108,16 @@ def chat(
             )
 
         # 5. Update the conversation's last-updated time.
-        user_supabase.table("conversations").update(
-            {"updated_at": datetime.now(timezone.utc).isoformat()}
-        ).eq("id", request.conversation_id).eq(
-            "user_id", user_id
-        ).execute()
+        try:
+            user_supabase.table("conversations").update(
+                {"updated_at": datetime.now(timezone.utc).isoformat()}
+            ).eq("id", request.conversation_id).eq(
+                "user_id", user_id
+            ).execute()
+        except Exception:
+            logging.exception(
+                "Failed to update the conversation timestamp."
+            )
 
         return {
             "conversation_id": request.conversation_id,
@@ -122,9 +131,36 @@ def chat(
         }
 
     except HTTPException:
+        if "user_message_id" in locals():
+            try:
+                user_supabase.table("messages").delete().eq(
+                    "id", user_message_id
+                ).eq(
+                    "user_id", user_id
+                ).eq(
+                    "conversation_id", request.conversation_id
+                ).execute()
+            except Exception:
+                logging.exception(
+                    "Failed to delete the user message after processing failed."
+                )
         raise
 
     except Exception as exc:
+        if "user_message_id" in locals():
+            try:
+                user_supabase.table("messages").delete().eq(
+                    "id", user_message_id
+                ).eq(
+                    "user_id", user_id
+                ).eq(
+                    "conversation_id", request.conversation_id
+                ).execute()
+            except Exception:
+                logging.exception(
+                    "Failed to delete the user message after processing failed."
+                )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Evida could not process or save the conversation.",

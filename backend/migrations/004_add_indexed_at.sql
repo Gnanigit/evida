@@ -1,0 +1,2 @@
+ALTER TABLE public.documents
+ADD COLUMN indexed_at TIMESTAMPTZ NULL DEFAULT NULL;

@@ -1,7 +1,7 @@
 import logging
 import tempfile
 from pathlib import Path
-
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.security import HTTPAuthorizationCredentials
 
@@ -28,7 +28,7 @@ def list_documents(
 
     response = (
         user_supabase.table("documents")
-        .select("id, filename, storage_path, content_type, created_at")
+        .select("id, filename, storage_path, content_type, created_at, indexed_at")
         .eq("user_id", current_user["id"])
         .order("created_at", desc=True)
         .execute()
@@ -100,7 +100,7 @@ async def upload_document(
                 "storage_path": storage_path,
                 "content_type": "application/pdf",
             })
-            .select("id, filename, storage_path, content_type, created_at")
+            .select("id, filename, storage_path, content_type, created_at, indexed_at")
             .execute()
         )
 
@@ -142,7 +142,7 @@ def index_document(
     # 1. Find the document and verify ownership.
     response = (
         user_supabase.table("documents")
-        .select("id, filename, storage_path")
+        .select("id, filename, storage_path, indexed_at")
         .eq("id", document_id)
         .eq("user_id", current_user["id"])
         .execute()
@@ -189,6 +189,18 @@ def index_document(
             document_id=document["id"],
         )
 
+        # 6. Save the successful indexing time.
+        user_supabase.table("documents").update(
+            {
+                "indexed_at": datetime.now(timezone.utc).isoformat()
+            }
+        ).eq(
+            "id", document["id"]
+        ).eq(
+            "user_id", current_user["id"]
+        ).execute()
+
+
         return {
             "message": "Document indexed successfully.",
             "document_id": document["id"],
@@ -208,7 +220,7 @@ def index_document(
         ) from exc
 
     finally:
-        # 6. Always remove the temporary PDF.
+        # 7. Always remove the temporary PDF.
         if temp_path is not None:
             try:
                 temp_path.unlink(missing_ok=True)

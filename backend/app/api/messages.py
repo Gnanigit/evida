@@ -38,7 +38,7 @@ def list_messages(
 
     messages_response = (
         user_supabase.table("messages")
-        .select("id, conversation_id, role, content, created_at")
+        .select("id, conversation_id, role, content, sources, created_at")
         .eq("conversation_id", conversation_id)
         .eq("user_id", current_user["id"])
         .order("created_at")
@@ -81,7 +81,7 @@ def create_message(
             "role": "user",
             "content": message.content,
         })
-        .select("id, conversation_id, role, content, created_at")
+        .select("id, conversation_id, role, content, sources, created_at")
         .execute()
     )
 
