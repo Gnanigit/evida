@@ -2,7 +2,6 @@ from langchain_core.runnables import RunnableConfig
 
 from app.graph.state import EvidaState
 from app.ingestion.vector_store import (
-    DEFAULT_DB_PATH,
     open_vector_store,
     search_documents,
 )
@@ -16,13 +15,9 @@ def retrieval_node(
 
     configurable = (config or {}).get("configurable", {})
 
-    # Resolve settings for this retrieval operation.
-    persist_directory = configurable.get(
-        "persist_directory",
-        str(DEFAULT_DB_PATH),
-    )
     user_id = configurable.get("user_id")
     document_ids = configurable.get("document_ids")
+
     if not user_id:
         raise ValueError(
             "A user_id must be provided to retrieve private documents."
@@ -36,7 +31,7 @@ def retrieval_node(
 
     attempts = state.get("retrieval_attempts", 0) + 1
 
-    vector_store = open_vector_store(persist_directory)
+    vector_store = open_vector_store()
 
     documents = search_documents(
         vector_store=vector_store,

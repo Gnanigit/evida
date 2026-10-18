@@ -1,4 +1,3 @@
-
 fastapi
 uvicorn[standard]
 langgraph
@@ -15,9 +14,7 @@ httpx
 langchain-groq
 reportlab
 sentence-transformers
-langchain-chroma
 langchain-huggingface
-sentence-transformers
 langchain-tavily
 supabase
 python-multipart

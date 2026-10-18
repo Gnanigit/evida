@@ -27,15 +27,11 @@ def test_store_and_search_documents(tmp_path):
     chunks = load_and_split_pdf(pdf_path)
     assert len(chunks) > 0
     print("Number of chunks:", len(chunks))
-    # 3. Store the chunks in a temporary Chroma database.
-
-    db_path = tmp_path / "chroma_db"
-
+    # 3. Store the chunks in the test Chroma collection.
     vector_store = create_vector_store(
         documents=chunks,
         user_id="test-user",
         document_id="test-document",
-        persist_directory=str(db_path),
     )
 
     # 4. Search for information about Evida.

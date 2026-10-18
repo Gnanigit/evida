@@ -7,10 +7,7 @@ from app.ingestion.vector_store import (
 )
 
 
-def test_users_can_only_search_their_own_documents(tmp_path):
-    # Use a temporary database for this test.
-    db_path = tmp_path / "chroma_test"
-
+def test_users_can_only_search_their_own_documents():
     # Add a document for User A.
     add_documents_to_vector_store(
         documents=[
@@ -23,7 +20,6 @@ def test_users_can_only_search_their_own_documents(tmp_path):
         ],
         user_id="user-a",
         document_id="document-a",
-        persist_directory=db_path,
     )
 
     # Add a similar document for User B.
@@ -38,10 +34,9 @@ def test_users_can_only_search_their_own_documents(tmp_path):
         ],
         user_id="user-b",
         document_id="document-b",
-        persist_directory=db_path,
     )
 
-    vector_store = open_vector_store(db_path)
+    vector_store = open_vector_store()
 
     # Search as User A.
     results_a = search_documents(

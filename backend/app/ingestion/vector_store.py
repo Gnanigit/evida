@@ -1,14 +1,13 @@
+from functools import lru_cache
+
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
-from pathlib import Path
 from app.core.config import settings
 
 
-# Resolve the storage path relative to the backend folder.
-DEFAULT_DB_PATH = Path(__file__).resolve().parents[2] / "chroma_db"
-
-
+# Load the embedding model once per process.
+@lru_cache(maxsize=1)
 def get_embeddings() -> HuggingFaceEmbeddings:
     # Create the embedding model used for indexing and searching.
     return HuggingFaceEmbeddings(
@@ -16,14 +15,15 @@ def get_embeddings() -> HuggingFaceEmbeddings:
     )
 
 
-def open_vector_store(
-    persist_directory: str | Path = DEFAULT_DB_PATH,
-) -> Chroma:
-    """Open an existing Chroma store or create its collection."""
+# Reuse one Chroma Cloud connection across requests.
+@lru_cache(maxsize=1)
+def open_vector_store() -> Chroma:
     return Chroma(
         collection_name=settings.collection_name,
         embedding_function=get_embeddings(),
-        persist_directory=str(persist_directory),
+        chroma_cloud_api_key=settings.chroma_api_key,
+        tenant=settings.chroma_tenant,
+        database=settings.chroma_database,
     )
 
 
@@ -31,15 +31,12 @@ def add_documents_to_vector_store(
     documents: list[Document],
     user_id: str,
     document_id: str,
-    persist_directory: str | Path = DEFAULT_DB_PATH,
 ) -> Chroma:
-    # Replace a document's chunks without affecting other documents.
-    vector_store = open_vector_store(persist_directory)
+    vector_store = open_vector_store()
 
     if not documents:
         return vector_store
 
-    # Add ownership information to every chunk.
     prepared_documents = [
         Document(
             page_content=document.page_content,
@@ -52,7 +49,6 @@ def add_documents_to_vector_store(
         for document in documents
     ]
 
-    # Delete only chunks belonging to this user and document.
     vector_store.delete(
         where={
             "$and": [
@@ -62,7 +58,6 @@ def add_documents_to_vector_store(
         }
     )
 
-    # Use predictable IDs so each chunk has a stable identity.
     chunk_ids = [
         f"{document_id}:{index}"
         for index in range(len(prepared_documents))
@@ -76,12 +71,10 @@ def add_documents_to_vector_store(
     return vector_store
 
 
-
 def create_vector_store(
     documents: list[Document],
     user_id: str,
     document_id: str,
-    persist_directory: str | Path = DEFAULT_DB_PATH,
 ) -> Chroma:
     """Create or update the store for a specific document."""
 
@@ -89,7 +82,6 @@ def create_vector_store(
         documents=documents,
         user_id=user_id,
         document_id=document_id,
-        persist_directory=persist_directory,
     )
 
 def search_documents(

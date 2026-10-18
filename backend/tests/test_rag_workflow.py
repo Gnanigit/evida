@@ -25,24 +25,20 @@ def test_document_question_uses_retrieved_evidence(tmp_path):
     # Extract and split the PDF text.
     chunks = load_and_split_pdf(pdf_path)
 
-    # Index the chunks in a temporary Chroma database.
-    db_path = tmp_path / "chroma_db"
-
+    # Index the chunks in the test Chroma collection.
     create_vector_store(
         documents=chunks,
-        persist_directory=db_path,
         user_id="test-user",
         document_id="test-document",
     )
 
-    # Run the workflow against the same database.
+    # Run the workflow against the same collection.
     result = graph.invoke(
         {
             "question": "According to my notes, what does Evida do?",
         },
         config={
             "configurable": {
-                "persist_directory": str(db_path),
                 "user_id": "test-user",
             }
         },

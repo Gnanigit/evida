@@ -20,22 +20,18 @@ def test_retrieval_node_returns_context_and_sources(tmp_path):
     # Load and split the PDF.
     chunks = load_and_split_pdf(pdf_path)
 
-    # Index the chunks in an isolated Chroma database.
-    db_path = tmp_path / "chroma_db"
-
+    # Index the chunks in the test Chroma collection.
     create_vector_store(
         documents=chunks,
-        persist_directory=db_path,
         user_id="test-user",
         document_id="test-document",
     )
 
-    # Execute the retrieval node against that database.
+    # Execute the retrieval node against that collection.
     result = retrieval_node(
         {"question": "What does Evida retrieve?"},
         config={
             "configurable": {
-                "persist_directory": str(db_path),
                 "user_id": "test-user",
             }
         },
