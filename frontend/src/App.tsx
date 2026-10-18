@@ -25,7 +25,9 @@ function App() {
           <Route element={<AppLayout />}>
             <Route index element={<ChatRoute />} />
             <Route path="c/:conversationId" element={<ChatRoute />} />
-            <Route path="documents" element={<DocumentsPage />} />
+            <Route path="library" element={<DocumentsPage />} />
+            {/* Old URL: keep bookmarks and links working. */}
+            <Route path="documents" element={<Navigate to="/library" replace />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

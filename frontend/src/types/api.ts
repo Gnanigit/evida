@@ -10,6 +10,14 @@ export type Conversation = {
   title: string;
   created_at: string;
   updated_at: string;
+  // Missing on a newly created conversation, which is never pinned.
+  is_pinned?: boolean;
+};
+
+// A file sent with a user message (snapshot saved on the message).
+export type MessageAttachment = {
+  id: string;
+  filename: string;
 };
 
 export type Message = {
@@ -18,6 +26,7 @@ export type Message = {
   role: "user" | "assistant";
   content: string;
   sources?: Source[];
+  attachments?: MessageAttachment[];
   created_at: string;
 };
 
@@ -46,6 +55,10 @@ export type DocumentRecord = {
   content_type: string;
   created_at: string;
   indexed_at: string | null;
+  // Set for files attached in a chat; null for library documents.
+  conversation_id?: string | null;
+  // Title of that conversation, when listed with include_attachments.
+  conversation_title?: string | null;
 };
 
 export type IndexResult = {

@@ -16,6 +16,8 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 class ChatRequest(BaseModel):
     conversation_id: str
     question: str = Field(min_length=1, max_length=10000)
+    # Documents attached with this question (shown as chips on the message).
+    attachment_ids: list[str] = Field(default_factory=list, max_length=20)
 
 
 @router.post("/")
@@ -51,6 +53,19 @@ def chat(
                 detail="Conversation not found.",
             )
 
+        # 1b. Files sent with this question: only the user's own attachments in this chat.
+        attachments = []
+        if request.attachment_ids:
+            sent_files_response = (
+                user_supabase.table("documents")
+                .select("id, filename")
+                .eq("user_id", user_id)
+                .eq("conversation_id", request.conversation_id)
+                .in_("id", request.attachment_ids)
+                .execute()
+            )
+            attachments = sent_files_response.data or []
+
         # 2. Save the user's question.
         user_message_response = (
             user_supabase.table("messages")
@@ -59,8 +74,9 @@ def chat(
                 "user_id": user_id,
                 "role": "user",
                 "content": request.question,
+                "attachments": attachments,
             })
-            .select("id, conversation_id, role, content, sources, created_at")
+            .select("id, conversation_id, role, content, sources, attachments, created_at")
             .execute()
         )
 
@@ -72,12 +88,36 @@ def chat(
 
         user_message_id = user_message_response.data[0]["id"]
 
+        # Documents this conversation may search: its own attachments if it
+        # has any, otherwise the user's library.
+        # (conversation_id was verified as the user's own in step 1.)
+        attachments_response = (
+            user_supabase.table("documents")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("conversation_id", request.conversation_id)
+            .execute()
+        )
+        document_ids = [row["id"] for row in attachments_response.data or []]
+
+        if not document_ids:
+            library_response = (
+                user_supabase.table("documents")
+                .select("id")
+                .eq("user_id", user_id)
+                .is_("conversation_id", "null")
+                .execute()
+            )
+            document_ids = [row["id"] for row in library_response.data or []]
+
+        
         # 3. Run the existing LangGraph workflow.
         result = graph.invoke(
             {"question": request.question},
             config={
                 "configurable": {
                     "user_id": user_id,
+                    "document_ids": document_ids,
                 }
             },
         )
@@ -97,7 +137,7 @@ def chat(
                 "content": answer,
                 "sources": result.get("sources", []),
             })
-            .select("id, conversation_id, role, content, sources, created_at")
+            .select("id, conversation_id, role, content, sources, attachments, created_at")
             .execute()
         )
 

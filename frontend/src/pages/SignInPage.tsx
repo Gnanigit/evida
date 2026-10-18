@@ -1,5 +1,6 @@
 import { useState, type SubmitEvent } from 'react'
 import { Link } from 'react-router'
+import Brand from '../components/common/Brand'
 import { useAuth } from '../auth/AuthContext'
 import { describeAuthError } from '../auth/authErrors'
 import { supabase } from '../services/supabase'
@@ -33,6 +34,7 @@ export default function SignInPage() {
   return (
     <main className="centered-page">
       <div className="card">
+        <Brand large />
         <h1>Sign in to Evida</h1>
 
         {sessionExpired && !error && (

@@ -1,5 +1,6 @@
 import { useState, type SubmitEvent } from 'react'
 import { Link } from 'react-router'
+import Brand from '../components/common/Brand'
 import { describeAuthError } from '../auth/authErrors'
 import { supabase } from '../services/supabase'
 
@@ -62,6 +63,7 @@ export default function SignUpPage() {
     return (
       <main className="centered-page">
         <div className="card">
+          <Brand large />
           <h1>Check your email</h1>
           <p>
             We sent a confirmation link to <strong>{confirmationEmail}</strong>. Open it to
@@ -78,6 +80,7 @@ export default function SignUpPage() {
   return (
     <main className="centered-page">
       <div className="card">
+        <Brand large />
         <h1>Create your Evida account</h1>
 
         {error && (

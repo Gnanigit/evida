@@ -97,11 +97,25 @@ def search_documents(
     question: str,
     user_id: str,
     k: int = 3,
+    document_ids: list[str] | None = None,
 ) -> list[Document]:
-    # Return the most relevant document chunks for a question.
+    # Return the most relevant chunks, optionally limited to specific documents.
+    if document_ids is None:
+        search_filter = {"user_id": user_id}
+    elif not document_ids:
+        # Nothing this conversation is allowed to search.
+        return []
+    
+    else:
+        search_filter = {
+            "$and": [
+                {"user_id": user_id},
+                {"document_id": {"$in": document_ids}},
+            ]
+        }
 
     return vector_store.similarity_search(
         query=question,
         k=k,
-        filter={"user_id": user_id},
+        filter=search_filter,
     )

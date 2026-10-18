@@ -22,7 +22,7 @@ def retrieval_node(
         str(DEFAULT_DB_PATH),
     )
     user_id = configurable.get("user_id")
-
+    document_ids = configurable.get("document_ids")
     if not user_id:
         raise ValueError(
             "A user_id must be provided to retrieve private documents."
@@ -43,6 +43,7 @@ def retrieval_node(
         question=query,
         user_id=user_id,
         k=3,
+        document_ids=document_ids,
     )
 
     return {

@@ -18,6 +18,15 @@ class FakeQuery:
     def eq(self, *args, **kwargs):
         return self
 
+    def is_(self, *args, **kwargs):
+        return self
+
+    def or_(self, *args, **kwargs):
+        return self
+    
+    def in_(self, *args, **kwargs):
+        return self
+
     def insert(self, data):
         self.inserted_data = data
         return self
