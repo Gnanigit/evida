@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react'
 import { Link, useLocation } from 'react-router'
 import Brand from '../components/common/Brand'
+import PasswordInput from '../components/common/PasswordInput'
 import { useAuth } from '../auth/AuthContext'
 import { describeAuthError } from '../auth/authErrors'
 import { authLinkError } from '../auth/authLinkError'
@@ -113,12 +114,11 @@ export default function SignInPage() {
           </label>
           <label className="field">
             <span>Password</span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
               required
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={setPassword}
             />
           </label>
           <button type="submit" className="button button-primary" disabled={submitting}>

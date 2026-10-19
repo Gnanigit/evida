@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import Brand from '../components/common/Brand'
+import PasswordInput from '../components/common/PasswordInput'
 import { describeAuthError } from '../auth/authErrors'
 import { signUpClient } from '../services/supabase'
 
@@ -146,23 +147,21 @@ export default function SignUpPage() {
           </label>
           <label className="field">
             <span>Password</span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               required
               minLength={MIN_PASSWORD_LENGTH}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={setPassword}
             />
           </label>
           <label className="field">
             <span>Confirm password</span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               required
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              onChange={setConfirmPassword}
             />
           </label>
           <button type="submit" className="button button-primary" disabled={submitting}>
