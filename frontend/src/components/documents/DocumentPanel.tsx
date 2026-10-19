@@ -89,7 +89,7 @@ export default function DocumentPanel({ document, status, error, onClose }: Docu
       <div className="doc-panel-inner">
         <header className="doc-panel-header">
           <span className="doc-tile" aria-hidden="true">
-            <FileText size={20} />
+            <FileText size={16} />
           </span>
 
           <div className="doc-panel-heading">

@@ -2559,12 +2559,23 @@ a.source-card:focus-visible {
   height: 100%;
 }
 
+/* Compact bars so the PDF gets most of the height. */
 .doc-panel-header {
   display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
-  padding: 1rem 1rem 1rem 1.25rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.9rem;
   border-bottom: 1px solid var(--border);
+}
+
+.doc-panel-header .doc-tile {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.doc-panel-header .pill {
+  padding-block: 0.05rem;
 }
 
 .doc-panel-heading {
@@ -2573,11 +2584,12 @@ a.source-card:focus-visible {
 }
 
 .doc-panel-title {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.1rem;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
+  line-height: 1.3;
 }
 
 .doc-panel-actions {
@@ -2628,8 +2640,9 @@ a.source-card:focus-visible {
 }
 
 .doc-panel-footer {
-  padding: 0.6rem 1.25rem;
-  font-size: 0.8rem;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
 }
