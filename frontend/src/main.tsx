@@ -2,6 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import './index.css'
+// Read a failed email-link error from the URL before the router redirects.
+import './auth/authLinkError'
 import { missingConfig } from './config'
 import ConfigError from './components/common/ConfigError'
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import Brand from '../components/common/Brand'
 import { useAuth } from '../auth/AuthContext'
 import { describeAuthError } from '../auth/authErrors'
+import { authLinkError } from '../auth/authLinkError'
 import { supabase } from '../services/supabase'
 
 export default function SignInPage() {
@@ -11,6 +12,31 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // A failed confirmation link: offer to send a new one.
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [resendError, setResendError] = useState<string | null>(null)
+
+  async function resendConfirmation() {
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setResendError('Enter your email above, then send the link.')
+      return
+    }
+    setResendState('sending')
+    setResendError(null)
+    const { error: resendFailure } = await supabase.auth.resend({
+      type: 'signup',
+      email: trimmedEmail,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    })
+    if (resendFailure) {
+      setResendError(describeAuthError(resendFailure))
+      setResendState('idle')
+    } else {
+      setResendState('sent')
+    }
+  }
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault()
@@ -37,6 +63,26 @@ export default function SignInPage() {
         <Brand large />
         <h1>Sign in to Evida</h1>
 
+        {authLinkError && !error && (
+          <div className="alert alert-error alert-stack" role="alert">
+            <p className="alert-text">{authLinkError.message}</p>
+            {resendState === 'sent' ? (
+              <p className="alert-text">
+                A new confirmation link is on its way to <strong>{email.trim()}</strong>.
+              </p>
+            ) : (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => void resendConfirmation()}
+                disabled={resendState === 'sending'}
+              >
+                {resendState === 'sending' ? 'Sending…' : 'Resend confirmation email'}
+              </button>
+            )}
+            {resendError && <p className="alert-text">{resendError}</p>}
+          </div>
+        )}
         {sessionExpired && !error && (
           <p className="alert">Your session has expired. Please sign in again.</p>
         )}
