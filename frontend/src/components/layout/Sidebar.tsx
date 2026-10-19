@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Ellipsis, MessageSquare, Pencil, Pin, SquarePen, Trash2 } from 'lucide-react'
 import { Link, NavLink } from 'react-router'
 import { errorMessage } from '../../services/api'
@@ -142,14 +143,25 @@ type ConversationRowProps = {
 }
 
 const ROW_MENU_GAP = 4
+const ROW_MENU_WIDTH = 168
 const ROW_MENU_HEIGHT = 90
+const VIEWPORT_MARGIN = 8
 
-// Below the ⋯ button, right-aligned with it; above it when near the bottom of the screen.
+// Below the ⋯ button, starting at its left edge and opening rightward; shifted
+// left only as far as needed to stay on screen. Flips above the button when
+// near the bottom of the screen.
 const placeRowMenu: PlaceMenu = (trigger) => {
-  const right = window.innerWidth - trigger.right
-  return trigger.bottom + ROW_MENU_GAP + ROW_MENU_HEIGHT > window.innerHeight
-    ? { right, bottom: window.innerHeight - trigger.top + ROW_MENU_GAP }
-    : { right, top: trigger.bottom + ROW_MENU_GAP }
+  const maxLeft = window.innerWidth - VIEWPORT_MARGIN - ROW_MENU_WIDTH
+  const left = Math.max(VIEWPORT_MARGIN, Math.min(trigger.left, maxLeft))
+
+  if (trigger.bottom + ROW_MENU_GAP + ROW_MENU_HEIGHT > window.innerHeight - VIEWPORT_MARGIN) {
+    return {
+      left,
+      bottom: window.innerHeight - trigger.top + ROW_MENU_GAP,
+      transformOrigin: 'bottom left',
+    }
+  }
+  return { left, top: trigger.bottom + ROW_MENU_GAP, transformOrigin: 'top left' }
 }
 
 // One conversation: ⋯ menu (Rename, Delete) and a pin toggle on the right.
@@ -236,8 +248,9 @@ function ConversationRow({
         </p>
       )}
 
-      {/* Outside .conversation-actions: its transform would break fixed positioning. */}
-      {menuStyle && (
+      {/* Portaled to <body>: the sidebar's transform (mobile drawer) and overflow
+          would otherwise reposition and clip this fixed menu. */}
+      {menuStyle && createPortal(
         <div
           ref={menuRef}
           className="menu"
@@ -270,7 +283,8 @@ function ConversationRow({
             <Trash2 size={15} aria-hidden="true" />
             Delete
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {confirmingDelete && (

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Menu } from 'lucide-react'
 import { Outlet, useMatch, useNavigate } from 'react-router'
 import { useAuth } from '../../auth/AuthContext'
 import { ApiError, errorMessage } from '../../services/api'
@@ -155,7 +156,7 @@ export default function AppLayout() {
             aria-label="Open navigation"
             onClick={() => setSidebarOpen(true)}
           >
-            ☰
+            <Menu size={20} aria-hidden="true" />
           </button>
           <Brand />
         </header>
