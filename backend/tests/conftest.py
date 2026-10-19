@@ -18,7 +18,8 @@ def local_vector_store(monkeypatch):
     )
 
     # retrieval.py imports the function by name, so patch both modules.
-    monkeypatch.setattr(vector_store, "open_vector_store", lambda: store)
-    monkeypatch.setattr(retrieval, "open_vector_store", lambda: store)
+    # Accepts with_embeddings like the real function; both modes share the test store.
+    monkeypatch.setattr(vector_store, "open_vector_store", lambda *_, **__: store)
+    monkeypatch.setattr(retrieval, "open_vector_store", lambda *_, **__: store)
 
     return store

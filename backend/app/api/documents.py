@@ -339,7 +339,8 @@ def delete_document(
 
     try:
         # 2. Delete only this user's chunks for this document.
-        vector_store = open_vector_store()
+        # Deletes need no embeddings: skip loading the model (memory).
+        vector_store = open_vector_store(with_embeddings=False)
 
         vector_store.delete(
             where={

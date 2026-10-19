@@ -129,7 +129,8 @@ def delete_conversation(
 
     if attachments:
         try:
-            vector_store = open_vector_store()
+            # Deletes need no embeddings: skip loading the model (memory).
+            vector_store = open_vector_store(with_embeddings=False)
             for attachment in attachments:
                 vector_store.delete(
                     where={

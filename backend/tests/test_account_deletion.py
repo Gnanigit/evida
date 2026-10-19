@@ -1,12 +1,16 @@
 import pytest
 from langchain_core.documents import Document
 
+import app.ingestion.vector_store as vector_store_module
 from app.api.account import purge_user_storage
 from app.ingestion.vector_store import (
     add_documents_to_vector_store,
     delete_user_vectors,
     open_vector_store,
 )
+
+# Captured at import, before conftest's autouse fixture swaps in the test store.
+real_open_vector_store = vector_store_module.open_vector_store
 
 USER_A = "11111111-1111-1111-1111-111111111111"
 USER_B = "22222222-2222-2222-2222-222222222222"
@@ -80,6 +84,28 @@ def test_delete_user_vectors_removes_only_that_users_chunks():
     store = open_vector_store()
     assert store.get(where={"user_id": USER_A})["ids"] == []
     assert store.get(where={"user_id": USER_B})["ids"] == ["doc-b:0"]
+
+
+def test_delete_mode_never_loads_the_embedding_model(monkeypatch):
+    # Loading the model ran the 512 MB Render instance out of memory on delete.
+    def no_model():
+        raise AssertionError("the embedding model must not load for deletes")
+
+    created = {}
+
+    class FakeChroma:
+        def __init__(self, **kwargs):
+            created.update(kwargs)
+
+    monkeypatch.setattr(vector_store_module, "get_embeddings", no_model)
+    monkeypatch.setattr(vector_store_module, "Chroma", FakeChroma)
+    real_open_vector_store.cache_clear()
+    try:
+        real_open_vector_store(with_embeddings=False)
+    finally:
+        real_open_vector_store.cache_clear()
+
+    assert created["embedding_function"] is None
 
 
 def test_delete_user_vectors_requires_user_id():

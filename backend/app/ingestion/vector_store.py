@@ -15,12 +15,19 @@ def get_embeddings() -> HuggingFaceEmbeddings:
     )
 
 
-# Reuse one Chroma Cloud connection across requests.
-@lru_cache(maxsize=1)
-def open_vector_store() -> Chroma:
+# Reuse one Chroma Cloud connection across requests (one per mode).
+@lru_cache(maxsize=2)
+def open_vector_store(with_embeddings: bool = True) -> Chroma:
+    """Open the Chroma Cloud collection.
+
+    with_embeddings=False skips loading the embedding model, which takes
+    hundreds of MB of RAM (it ran the 512 MB Render instance out of memory).
+    Deletes filter by metadata only and never need embeddings, so they
+    should always use with_embeddings=False.
+    """
     return Chroma(
         collection_name=settings.collection_name,
-        embedding_function=get_embeddings(),
+        embedding_function=get_embeddings() if with_embeddings else None,
         chroma_cloud_api_key=settings.chroma_api_key,
         tenant=settings.chroma_tenant,
         database=settings.chroma_database,
@@ -91,7 +98,7 @@ def delete_user_vectors(user_id: str) -> None:
     if not user_id:
         raise ValueError("A user_id is required to delete vectors.")
 
-    open_vector_store().delete(where={"user_id": user_id})
+    open_vector_store(with_embeddings=False).delete(where={"user_id": user_id})
 
 
 def search_documents(
