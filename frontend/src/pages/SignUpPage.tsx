@@ -6,8 +6,11 @@ import { supabase } from '../services/supabase'
 
 // Supabase's default minimum; the project's password policy is enforced server-side.
 const MIN_PASSWORD_LENGTH = 6
+const MAX_NAME_LENGTH = 50
 
 export default function SignUpPage() {
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -19,6 +22,12 @@ export default function SignUpPage() {
     event.preventDefault()
     if (submitting) return
 
+    const first = firstName.trim()
+    const last = lastName.trim()
+    if (!first || !last) {
+      setError('Please enter your first and last name.')
+      return
+    }
     if (password.length < MIN_PASSWORD_LENGTH) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`)
       return
@@ -35,7 +44,11 @@ export default function SignUpPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        // Saved as user metadata; migration 008's trigger copies it into profiles.
+        data: { first_name: first, last_name: last, full_name: `${first} ${last}` },
+      },
     })
 
     if (signUpError) {
@@ -90,6 +103,30 @@ export default function SignUpPage() {
         )}
 
         <form className="form" onSubmit={handleSubmit}>
+          <div className="field-row">
+            <label className="field">
+              <span>First name</span>
+              <input
+                type="text"
+                autoComplete="given-name"
+                required
+                maxLength={MAX_NAME_LENGTH}
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span>Last name</span>
+              <input
+                type="text"
+                autoComplete="family-name"
+                required
+                maxLength={MAX_NAME_LENGTH}
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+              />
+            </label>
+          </div>
           <label className="field">
             <span>Email</span>
             <input

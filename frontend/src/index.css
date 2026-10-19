@@ -332,6 +332,29 @@ code {
   outline-offset: -1px;
 }
 
+/* Two fields side by side (first / last name); stacked on narrow phones. */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.field-row .field {
+  min-width: 0;
+}
+
+.field-row .field input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 360px) {
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 .form-footer {
   margin: 1.25rem 0 0;
 }
@@ -888,6 +911,119 @@ a.button {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+/* Profile modal: avatar + name header, then a read-only details list. */
+.profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.avatar-large {
+  width: 48px;
+  height: 48px;
+  font-size: 1.2rem;
+}
+
+.profile-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.profile-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.profile-email {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.profile-details {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.profile-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.profile-row + .profile-row {
+  border-top: 1px solid var(--border);
+}
+
+.profile-row dt {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.profile-row dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* "Delete account" sits apart from Close, on the left. */
+.profile-actions {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-delete {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.profile-delete:hover {
+  color: var(--danger-hover);
+}
+
+/* Delete-account warning */
+.delete-caution {
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius);
+  background: var(--danger-bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.delete-caution-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--danger);
+}
+
+.delete-caution p {
+  margin: 0;
+}
+
+.delete-caution p.delete-caution-title {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.delete-caution ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

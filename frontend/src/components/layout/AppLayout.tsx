@@ -14,6 +14,16 @@ import Brand from '../common/Brand'
 import type { Conversation, CurrentUser } from '../../types/api'
 import type { AppContext } from './appContext'
 import Sidebar from './Sidebar'
+import type { ProfileNames } from './ProfileDialog'
+
+// Names from the sign-up metadata; null for accounts created before names were collected.
+function profileNames(metadata: Record<string, unknown> | undefined): ProfileNames {
+  const part = (key: string) => {
+    const value = metadata?.[key]
+    return typeof value === 'string' && value.trim() ? value.trim() : null
+  }
+  return { firstName: part('first_name'), lastName: part('last_name') }
+}
 
 const SIDEBAR_COLLAPSED_KEY = 'evida:sidebar-collapsed'
 
@@ -137,6 +147,7 @@ export default function AppLayout() {
     >
       <Sidebar
         email={currentUser?.email ?? session?.user.email ?? null}
+        profile={profileNames(session?.user.user_metadata)}
         conversations={conversations}
         onRetryConversations={() => void refreshConversations()}
         onRenameConversation={handleRenameConversation}

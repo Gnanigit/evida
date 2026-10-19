@@ -10,11 +10,13 @@ import ConfirmDialog from '../common/ConfirmDialog'
 import { DocumentIcon, SidebarIcon } from '../common/icons'
 import { usePopoverMenu, type PlaceMenu } from '../common/usePopoverMenu'
 import AccountMenu from './AccountMenu'
+import type { ProfileNames } from './ProfileDialog'
 import RenameConversationDialog from './RenameConversationDialog'
 import type { ConversationsState } from './AppLayout'
 
 type SidebarProps = {
   email: string | null
+  profile: ProfileNames
   conversations: ConversationsState
   onRetryConversations: () => void
   onRenameConversation: (conversationId: string, title: string) => Promise<void>
@@ -32,6 +34,7 @@ function rowClass({ isActive }: { isActive: boolean }) {
 
 export default function Sidebar({
   email,
+  profile,
   conversations,
   onRetryConversations,
   onRenameConversation,
@@ -128,7 +131,7 @@ export default function Sidebar({
       </nav>
 
       <div className="sidebar-footer">
-        <AccountMenu email={email} />
+        <AccountMenu email={email} firstName={profile.firstName} lastName={profile.lastName} />
       </div>
     </aside>
   )

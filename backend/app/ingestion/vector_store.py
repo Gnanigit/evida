@@ -84,6 +84,16 @@ def create_vector_store(
         document_id=document_id,
     )
 
+def delete_user_vectors(user_id: str) -> None:
+    """Delete every chunk owned by this user (all of their documents)."""
+
+    # Never run an unfiltered delete: an empty id must fail, not match nothing or everything.
+    if not user_id:
+        raise ValueError("A user_id is required to delete vectors.")
+
+    open_vector_store().delete(where={"user_id": user_id})
+
+
 def search_documents(
     vector_store: Chroma,
     question: str,
