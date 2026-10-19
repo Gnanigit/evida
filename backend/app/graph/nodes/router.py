@@ -10,6 +10,10 @@ llm = ChatGroq(
 )
 
 def router_node(state: EvidaState) -> dict:
+    # The user asked for web search: skip the LLM classification.
+    if state.get("force_web"):
+        return {"route": "web"}
+
     prompt = f"""
     Classify the user's question into exactly one category:
 

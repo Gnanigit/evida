@@ -278,10 +278,22 @@ code {
   margin-right: -0.02em;
 }
 
-.wordmark-i::before {
+/* Places the dot from the baseline, not the box top: fonts (Segoe, SF, Roboto)
+   put the glyph at different heights in its box, but 1ex is always the stem
+   height. An empty inline-block sits on the baseline, so this one's top edge
+   is exactly one dot plus a small gap above the stem. */
+.wordmark-dot {
+  display: inline-block;
+  width: 0;
+  height: calc(1ex + 0.08em + 0.24em);
+  vertical-align: baseline;
+}
+
+/* Static position (no top) puts it at .wordmark-dot's top edge; left: 50%
+   is relative to .wordmark-i, which centers it over the stem. */
+.wordmark-dot::before {
   content: '';
   position: absolute;
-  top: 0.06em;
   left: 50%;
   width: 0.24em;
   height: 0.24em;
@@ -1674,6 +1686,57 @@ a.source-card:focus-visible {
   outline-offset: -2px;
 }
 
+/* Web search toggle: an icon like the paperclip; a mint pill while on. */
+.web-search-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.web-search-toggle:hover {
+  color: var(--primary);
+}
+
+.web-search-toggle[aria-pressed='true'] {
+  padding: 0 0.7rem 0 0.55rem;
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--primary);
+}
+
+.web-search-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Narrow screens: keep the tinted icon, drop the label to save room for typing. */
+@media (max-width: 480px) {
+  .web-search-label {
+    display: none;
+  }
+
+  .web-search-toggle[aria-pressed='true'] {
+    padding: 0 0.45rem;
+  }
+}
+
 /* Attachment chips */
 .attachment-chips {
   list-style: none;
@@ -1786,7 +1849,8 @@ a.source-card:focus-visible {
   flex: 1;
   min-height: 1.6rem;
   max-height: 12rem;
-  padding: 0.3rem 0;
+  /* Left inset: the text now starts the row, next to the rounded edge. */
+  padding: 0.3rem 0 0.3rem 0.6rem;
   font: inherit;
   line-height: 1.5;
   color: var(--text);
@@ -1801,6 +1865,26 @@ a.source-card:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Text past one line: full width, buttons wrap to a row below on the right. */
+.composer-row.is-expanded {
+  flex-wrap: wrap;
+}
+
+.composer-row.is-expanded .composer-input {
+  flex-basis: 100%;
+}
+
+.composer-row.is-expanded .composer-actions {
+  margin-left: auto;
+}
+
+/* Attach + web search: packed close together, left of Send. */
+.composer-tools {
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
 
 .composer-count {
@@ -2717,8 +2801,32 @@ a.source-card:focus-visible {
     padding: 1.5rem 1rem 2rem;
   }
 
+  /* Title and Upload button share the first row; the subtitle spans below.
+     display: contents lifts the title and subtitle into the grid. */
   .docs-header {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 0.75rem;
+  }
+
+  .docs-header > div {
+    display: contents;
+  }
+
+  /* Move the title's bottom margin to the subtitle so the button centers on the title. */
+  .docs-title {
+    margin: 0;
+  }
+
+  .docs-subtitle {
+    grid-column: 1 / -1;
+    margin-top: 0.35rem;
+  }
+
+  .docs-upload-button {
+    grid-row: 1;
+    grid-column: 2;
   }
 
   .docs-toolbar {

@@ -18,6 +18,8 @@ class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=10000)
     # Documents attached with this question (shown as chips on the message).
     attachment_ids: list[str] = Field(default_factory=list, max_length=20)
+    # The user turned on web search: answer from the web, skipping the router.
+    web_search: bool = False
 
 
 @router.post("/")
@@ -113,7 +115,10 @@ def chat(
         
         # 3. Run the existing LangGraph workflow.
         result = graph.invoke(
-            {"question": request.question},
+            {
+                "question": request.question,
+                "force_web": request.web_search,
+            },
             config={
                 "configurable": {
                     "user_id": user_id,

@@ -14,7 +14,11 @@ export default function Wordmark({ size, className }: WordmarkProps) {
     >
       <span className="visually-hidden">Evida</span>
       <span aria-hidden="true">
-        Ev<span className="wordmark-i">ı</span>da
+        Ev
+        <span className="wordmark-i">
+          ı<span className="wordmark-dot" />
+        </span>
+        da
       </span>
     </span>
   )

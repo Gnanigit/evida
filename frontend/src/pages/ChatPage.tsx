@@ -16,10 +16,20 @@ import { askEvida } from '../services/chat'
 import type { MessageAttachment } from '../types/api'
 import { createConversation, listMessages, renameConversation } from '../services/conversations'
 
-type SendFailure = { question: string; message: string; attachments: MessageAttachment[] }
+type SendFailure = {
+  question: string
+  message: string
+  attachments: MessageAttachment[]
+  webSearch: boolean
+}
 
 // Passed through navigation when the first question creates a conversation.
-type Handoff = { conversationId: string; messages?: ChatItem[]; failure?: SendFailure }
+type Handoff = {
+  conversationId: string
+  messages?: ChatItem[]
+  failure?: SendFailure
+  webSearch?: boolean
+}
 
 const MAX_TITLE_LENGTH = 80
 
@@ -67,6 +77,8 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
   const [failure, setFailure] = useState<SendFailure | null>(handoff?.failure ?? null)
   const [draft, setDraft] = useState('')
+  // Web search mode: questions go straight to the web. Stays on until turned off.
+  const [webSearch, setWebSearch] = useState(handoff?.webSearch ?? false)
   const [showJump, setShowJump] = useState(false)
   // Files shown on the question while its answer is pending.
   const [pendingFiles, setPendingFiles] = useState<MessageAttachment[]>([])
@@ -177,7 +189,11 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
     element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' })
   }
 
-  async function sendQuestion(question: string, files: MessageAttachment[] = []) {
+  async function sendQuestion(
+    question: string,
+    files: MessageAttachment[] = [],
+    useWeb = webSearch,
+  ) {
     if (sendingRef.current) return
     sendingRef.current = true
     stickToBottomRef.current = true
@@ -206,6 +222,7 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
         targetId,
         question,
         files.map((file) => file.id),
+        useWeb,
       )
       const [userMessage, assistantMessage] = response.messages
       const newItems: ChatItem[] = [
@@ -217,20 +234,27 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
       if (!mountedRef.current) return
 
       if (!conversationId) {
-        navigate(`/c/${targetId}`, { state: { handoff: { conversationId: targetId, messages: newItems } } })
+        navigate(`/c/${targetId}`, {
+          state: { handoff: { conversationId: targetId, messages: newItems, webSearch } },
+        })
         return
       }
 
       setMessages((previous) => [...previous, ...newItems])
     } catch (error) {
-      const sendFailure = { question, message: errorMessage(error), attachments: files }
+      const sendFailure = {
+        question,
+        message: errorMessage(error),
+        attachments: files,
+        webSearch: useWeb,
+      }
 
       if (!mountedRef.current) return
 
       if (!conversationId && targetId) {
         // The conversation exists now; show it with the failure.
         navigate(`/c/${targetId}`, {
-          state: { handoff: { conversationId: targetId, failure: sendFailure } },
+          state: { handoff: { conversationId: targetId, failure: sendFailure, webSearch } },
         })
         return
       }
@@ -289,7 +313,9 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
 
   const composerHint = attachmentsProcessing
     ? 'Waiting for files to finish processing…'
-    : hasReadyAttachments
+    : webSearch
+      ? 'Web search is on: answers come from the web, with cited links.'
+      : hasReadyAttachments
       ? 'Answers in this chat use only the attached files.'
       : undefined
 
@@ -301,7 +327,9 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
       disabled={sending || Boolean(loadError) || loading || attachmentsProcessing}
       busy={sending}
       placeholder={
-        hasReadyAttachments
+        webSearch
+          ? 'Search the web…'
+          : hasReadyAttachments
           ? 'Ask about the attached files…'
           : startMode
             ? 'Ask a research question…'
@@ -309,6 +337,8 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
       }
       inputRef={inputRef}
       onAttach={attach}
+      webSearch={webSearch}
+      onToggleWebSearch={() => setWebSearch((on) => !on)}
       attachments={
         <AttachmentChips
           attachments={pendingAttachments}
@@ -440,7 +470,9 @@ export default function ChatPage({ conversationId }: { conversationId?: string }
                 <button
                   type="button"
                   className="button button-small"
-                  onClick={() => void sendQuestion(failure.question, failure.attachments)}
+                  onClick={() =>
+                    void sendQuestion(failure.question, failure.attachments, failure.webSearch)
+                  }
                 >
                   Retry
                 </button>

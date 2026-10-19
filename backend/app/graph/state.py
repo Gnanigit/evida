@@ -7,6 +7,9 @@ class EvidaState(TypedDict):
     # The workflow's routing decision
     route: Literal["general", "retrieval", "web"]
 
+    # The user turned on web search: every subquestion goes to the web.
+    force_web: NotRequired[bool]
+
     # Retrieved document information
     context: list[str]
     sources: list[dict]

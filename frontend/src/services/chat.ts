@@ -6,13 +6,20 @@ export const MAX_QUESTION_LENGTH = 10000
 
 // Runs the RAG workflow; the backend saves both the question and the answer.
 // attachmentIds: files sent with this question, saved on the user message.
+// webSearch: answer from the web, skipping the backend's route choice.
 export function askEvida(
   conversationId: string,
   question: string,
   attachmentIds: string[] = [],
+  webSearch = false,
 ): Promise<ChatResponse> {
   return apiRequest<ChatResponse>('/chat/', {
     method: 'POST',
-    json: { conversation_id: conversationId, question, attachment_ids: attachmentIds },
+    json: {
+      conversation_id: conversationId,
+      question,
+      attachment_ids: attachmentIds,
+      web_search: webSearch,
+    },
   })
 }
