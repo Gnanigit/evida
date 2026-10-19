@@ -129,22 +129,39 @@ evida/
 
 ### 2. Backend
 
-Create `backend/.env`:
+Copy `backend/.env.example` to `backend/.env` and fill in the values:
 
 ```env
-GROQ_API_KEY=...
-TAVILY_API_KEY=...
+GROQ_API_KEY=
+GROQ_MODEL=
+EMBEDDING_MODEL=
+COLLECTION_NAME=
 
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_PUBLISHABLE_KEY=...
+TAVILY_API_KEY=
 
-CHROMA_API_KEY=...
-CHROMA_TENANT=...
-CHROMA_DATABASE=...
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
 
-# Optional. Defaults to the local Vite origins. Must be a JSON list.
-# CORS_ORIGINS=["https://your-frontend.vercel.app","http://localhost:5173"]
+CHROMA_API_KEY=
+CHROMA_TENANT=
+CHROMA_DATABASE=
 ```
+
+| Variable | Required | Description |
+|---|---|---|
+| `GROQ_API_KEY` | Yes | Groq API key, for the LLM |
+| `GROQ_MODEL` | No | Groq model. Default: `openai/gpt-oss-120b` |
+| `EMBEDDING_MODEL` | No | Embedding model. Default: `sentence-transformers/all-MiniLM-L6-v2` |
+| `COLLECTION_NAME` | No | Chroma collection name. Default: `evida_documents` |
+| `TAVILY_API_KEY` | Yes | Tavily API key, for web search |
+| `SUPABASE_URL` | Yes | Supabase project URL |
+| `SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase **publishable** key (not the service-role key) |
+| `CHROMA_API_KEY` | Yes | Chroma Cloud API key |
+| `CHROMA_TENANT` | Yes | Chroma Cloud tenant |
+| `CHROMA_DATABASE` | Yes | Chroma Cloud database |
+| `CORS_ORIGINS` | No | JSON list of allowed browser origins. Default: `http://localhost:5173`, `http://127.0.0.1:5173`, `https://evida-virid.vercel.app` |
+
+> Changing `EMBEDDING_MODEL` or `COLLECTION_NAME` means existing PDFs must be re-indexed. Vectors from different models can't be searched together.
 
 Then run:
 
@@ -158,13 +175,21 @@ The API runs at http://localhost:8000. Interactive docs are at http://localhost:
 
 ### 3. Frontend
 
-Create `frontend/.env.local`:
+Copy `frontend/.env.example` to `frontend/.env.local` and fill in the values:
 
 ```env
-VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=...
-VITE_API_BASE_URL=http://localhost:8000
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_API_BASE_URL=
 ```
+
+| Variable | Description |
+|---|---|
+| `VITE_SUPABASE_URL` | Supabase project URL (same as the backend's `SUPABASE_URL`) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key |
+| `VITE_API_BASE_URL` | Backend URL, such as `http://localhost:8000` locally, or your Render URL in production |
+
+All three are required. The app shows a configuration error if any is missing.
 
 > Every `VITE_` variable is bundled into the browser build. Never put server-side keys here.
 
@@ -233,7 +258,7 @@ npm run build   # type-check and production build
   - Root directory: `backend`
   - Build: `pip install -r requirements.txt`
   - Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-  - Add the backend environment variables, and set `CORS_ORIGINS` to include the Vercel URL.
+  - Add the backend environment variables. If the frontend isn't at `https://evida-virid.vercel.app`, set `CORS_ORIGINS` to include its URL.
 - **Supabase:** point the Site URL and Redirect URLs at the production frontend.
 
 > **Memory note:** the embedding model runs inside the backend process. On a 512 MB instance, indexing PDFs and PDF-based answers can exceed the memory limit, so use an instance with more RAM. Deletes don't load the model.
