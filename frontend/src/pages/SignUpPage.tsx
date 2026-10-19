@@ -1,14 +1,15 @@
 import { useState, type SubmitEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import Brand from '../components/common/Brand'
 import { describeAuthError } from '../auth/authErrors'
-import { supabase } from '../services/supabase'
+import { signUpClient } from '../services/supabase'
 
 // Supabase's default minimum; the project's password policy is enforced server-side.
 const MIN_PASSWORD_LENGTH = 6
 const MAX_NAME_LENGTH = 50
 
 export default function SignUpPage() {
+  const navigate = useNavigate()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -41,7 +42,7 @@ export default function SignUpPage() {
     setError(null)
 
     const trimmedEmail = email.trim()
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await signUpClient.auth.signUp({
       email: trimmedEmail,
       password,
       options: {
@@ -65,11 +66,17 @@ export default function SignUpPage() {
       return
     }
 
-    // A session means confirmation is disabled: the auth listener signs the user in.
-    if (!data.session) {
-      setConfirmationEmail(trimmedEmail)
-      setSubmitting(false)
+    // A session means email confirmation is off in Supabase: the account is
+    // ready, so send the user to sign in. (signUpClient never stores the
+    // session, so they are not signed in yet.)
+    if (data.session) {
+      navigate('/signin', { replace: true, state: { accountCreated: trimmedEmail } })
+      return
     }
+
+    // Confirmation is on: Supabase emailed a link to activate the account.
+    setConfirmationEmail(trimmedEmail)
+    setSubmitting(false)
   }
 
   if (confirmationEmail) {

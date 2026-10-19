@@ -1,5 +1,5 @@
 import { useState, type SubmitEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import Brand from '../components/common/Brand'
 import { useAuth } from '../auth/AuthContext'
 import { describeAuthError } from '../auth/authErrors'
@@ -8,7 +8,10 @@ import { supabase } from '../services/supabase'
 
 export default function SignInPage() {
   const { sessionExpired } = useAuth()
-  const [email, setEmail] = useState('')
+  // Set by the sign-up page after a new account is created.
+  const accountCreated = (useLocation().state as { accountCreated?: string } | null)
+    ?.accountCreated
+  const [email, setEmail] = useState(accountCreated ?? '')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +66,11 @@ export default function SignInPage() {
         <Brand large />
         <h1>Sign in to Evida</h1>
 
+        {accountCreated && !error && (
+          <p className="alert alert-success" role="status">
+            Account created. Sign in to get started.
+          </p>
+        )}
         {authLinkError && !error && (
           <div className="alert alert-error alert-stack" role="alert">
             <p className="alert-text">{authLinkError.message}</p>

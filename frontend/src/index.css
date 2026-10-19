@@ -397,6 +397,12 @@ a.button {
   margin-top: 0.5rem;
 }
 
+.alert-success {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--success);
+}
+
 /* Multi-part alert (message + action); stacked with small gaps. */
 .alert-stack {
   display: flex;
